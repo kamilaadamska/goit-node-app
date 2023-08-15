@@ -15,9 +15,7 @@ const saveContacts = async (contacts) => {
 const listContacts = async () => {
   try {
     const data = await fs.readFile(pathToContacts, { encoding: "utf8" });
-    const contacts = JSON.parse(data);
-
-    return contacts;
+    return JSON.parse(data);
   } catch (err) {
     console.log("There was an error reading the contact list:", err);
   }
@@ -26,9 +24,7 @@ const listContacts = async () => {
 const getContactById = async (id) => {
   try {
     const contacts = await listContacts();
-    const searchedContact = contacts.filter((contact) => contact.id === id);
-
-    return searchedContact;
+    return contacts.find((contact) => contact.id === id);
   } catch (err) {
     console.log("An error occurred while searching for the contact:", err);
   }
@@ -54,7 +50,13 @@ const removeContact = async (index) => {
   }
 };
 
-const updateContact = async (contactId, body) => {};
+const updateContact = async (id, updatedContact) => {
+  const contacts = await listContacts();
+  const index = contacts.findIndex((contact) => contact.id === id);
+
+  contacts[index] = updatedContact;
+  saveContacts(contacts);
+};
 
 module.exports = {
   listContacts,

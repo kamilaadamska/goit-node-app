@@ -7,6 +7,7 @@ const {
   getContactById,
   addContact,
   removeContact,
+  updateContact,
 } = require("../../models/contacts");
 
 router.get("/", async (_, res, __) => {
@@ -27,13 +28,13 @@ router.get("/", async (_, res, __) => {
 
 router.get("/:id", async (req, res, __) => {
   const { id } = req.params;
-  const [searchedContact] = await getContactById(id);
+  const searchedContact = await getContactById(id);
   searchedContact
     ? res.json({ status: "success", code: 200, data: searchedContact })
     : res.status(404).json({
         status: "error",
         code: 404,
-        message: "Not found",
+        message: "not found",
       });
 });
 
@@ -43,7 +44,7 @@ router.post("/", async (req, res, __) => {
     return res.status(400).json({
       status: "error",
       code: 400,
-      message: "Missing required name, email or phone field.",
+      message: "missing required name, email or phone field",
     });
   }
   const newContact = {
@@ -64,19 +65,38 @@ router.delete("/:id", async (req, res, __) => {
     return res.status(404).json({
       status: "error",
       code: 404,
-      message: "Not found",
+      message: "not found",
     });
   }
   removeContact(index);
   res.json({
     status: "success",
     code: 200,
-    message: "Contact deleted",
+    message: "contact deleted",
   });
 });
 
-router.put("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
+router.put("/:id", async (req, res, __) => {
+  const { id } = req.params;
+  const body = req.body;
+  if (!body) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: "missing fields",
+    });
+  }
+  const contactToUpdate = await getContactById(id);
+  if (!contactToUpdate) {
+    return res.status(404).json({
+      status: "error",
+      code: 404,
+      message: "not found",
+    });
+  }
+  const updatedContact = { ...contactToUpdate, ...body };
+  updateContact(id, updatedContact);
+  res.json({ status: "success", code: 200, data: updatedContact });
 });
 
 module.exports = router;
