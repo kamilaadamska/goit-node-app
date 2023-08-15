@@ -1,6 +1,5 @@
 const fs = require("fs").promises;
 const path = require("path");
-// const { nanoid } = require("nanoid");
 
 const pathToContacts = path.resolve("models", "contacts.json");
 
@@ -47,6 +46,16 @@ const getContactById = async (id) => {
   }
 };
 
+const addContact = async (newContact) => {
+  try {
+    const contacts = await listContacts();
+    contacts.push(newContact);
+    saveContacts(contacts);
+  } catch (err) {
+    console.log("An error occurred while adding the contact:", err);
+  }
+};
+
 const removeContact = async (id) => {
   try {
     const contacts = await readContacts();
@@ -60,29 +69,6 @@ const removeContact = async (id) => {
     saveContacts(contacts);
   } catch (err) {
     console.log("An error occurred while deleting the contact:", err);
-  }
-};
-
-const addContact = async (name, email, phone) => {
-  try {
-    if (!name || !email || !phone) {
-      console.log(
-        "Please try again with full details: name, email and phone must be given correctly."
-      );
-      return;
-    }
-    const newContact = {
-      // id: nanoid(),
-      name,
-      email,
-      phone,
-    };
-    const contacts = await readContacts();
-    contacts.push(newContact);
-    console.log("Contact added successfully.");
-    saveContacts(contacts);
-  } catch (err) {
-    console.log("An error occurred while adding the contact:", err);
   }
 };
 
