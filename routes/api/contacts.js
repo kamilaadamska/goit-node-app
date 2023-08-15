@@ -37,7 +37,7 @@ router.get("/:id", async (req, res, __) => {
       });
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", async (req, res, __) => {
   const { name, email, phone } = req.body;
   if (!name || !email || !phone) {
     return res.status(400).json({
@@ -56,8 +56,23 @@ router.post("/", async (req, res, next) => {
   res.status(201).json({ status: "success", code: 201, data: newContact });
 });
 
-router.delete("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
+router.delete("/:id", async (req, res, __) => {
+  const { id } = req.params;
+  const contacts = await listContacts();
+  const index = contacts.findIndex((contact) => contact.id === id);
+  if (index === -1) {
+    return res.status(404).json({
+      status: "error",
+      code: 404,
+      message: "Not found",
+    });
+  }
+  removeContact(index);
+  res.json({
+    status: "success",
+    code: 200,
+    message: "Contact deleted",
+  });
 });
 
 router.put("/:contactId", async (req, res, next) => {

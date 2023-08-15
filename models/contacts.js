@@ -3,22 +3,10 @@ const path = require("path");
 
 const pathToContacts = path.resolve("models", "contacts.json");
 
-const readContacts = async () => {
-  try {
-    const data = await fs.readFile(pathToContacts, { encoding: "utf8" });
-    const contacts = JSON.parse(data);
-
-    return contacts;
-  } catch (err) {
-    console.log("There was an error reading the contact list:", err);
-  }
-};
-
 const saveContacts = async (contacts) => {
   try {
     const contactsJSON = JSON.stringify(contacts);
     await fs.writeFile(pathToContacts, contactsJSON, { encoding: "utf8" });
-    console.log(`Changes have been saved.`);
   } catch (err) {
     console.log(`Changes have not been saved:`, err);
   }
@@ -56,16 +44,10 @@ const addContact = async (newContact) => {
   }
 };
 
-const removeContact = async (id) => {
+const removeContact = async (index) => {
   try {
-    const contacts = await readContacts();
-    const index = contacts.findIndex((contact) => contact.id === id);
-    if (index === -1) {
-      console.log("Contact not found. Please try with another id.");
-      return;
-    }
+    const contacts = await listContacts();
     contacts.splice(index, 1);
-    console.log("Contact removed successfully.");
     saveContacts(contacts);
   } catch (err) {
     console.log("An error occurred while deleting the contact:", err);
