@@ -1,7 +1,6 @@
 const express = require("express");
-const { nanoid } = require("nanoid");
+
 const router = express.Router();
-const Joi = require("joi");
 
 const {
   listContacts,
@@ -9,116 +8,106 @@ const {
   addContact,
   removeContact,
   updateContact,
+  updateStatusContact,
 } = require("../../models/contacts");
 
-router.get("/", async (_, res, __) => {
-  const contacts = await listContacts();
-  contacts.length === 0
-    ? res.status(404).json({
-        status: "error",
-        code: 404,
-        message:
-          "Contacts list is empty. Please add your first one using the POST method.",
-      })
-    : res.json({
-        status: "success",
-        code: 200,
-        data: contacts,
-      });
+router.get("/", async (_, res, next) => {
+  try {
+    const contacts = await listContacts();
+
+    res.json({
+      status: "success",
+      code: 200,
+      data: contacts,
+    });
+  } catch (err) {
+    console.log("There was an error reading the contact list:", err);
+    next(err);
+  }
 });
 
-router.get("/:id", async (req, res, __) => {
+router.get("/:id", async (req, res, next) => {
   const { id } = req.params;
-  const searchedContact = await getContactById(id);
-  searchedContact
-    ? res.json({ status: "success", code: 200, data: searchedContact })
-    : res.status(404).json({
-        status: "error",
-        code: 404,
-        message: "not found",
-      });
+  try {
+    const searchedContact = await getContactById(id);
+
+    res.json({ status: "success", code: 200, data: searchedContact });
+  } catch (err) {
+    console.log("An error occurred while searching for the contact:", err);
+    next(err);
+  }
 });
 
-router.post("/", async (req, res, __) => {
-  const body = req.body;
+router.post("/", async (req, res, next) => {
+  const { name, email, phone } = req.body;
 
-  const schema = Joi.object({
-    name: Joi.string().min(3).max(30).required(),
-    email: Joi.string().email().required(),
-    phone: Joi.string().min(7).max(15).required(),
-  });
-
-  const validation = schema.validate(body);
-
-  if (validation.error) {
+  if (Object.keys(req.body).length === 0) {
     return res.status(400).json({
       status: "error",
       code: 400,
-      message: `missing required field or there is something wrong in your data: ${validation.error}`,
+      message: `there are missing fields`,
     });
   }
 
-  const newContact = {
-    id: nanoid(),
-    ...body,
-  };
-  addContact(newContact);
-  res.status(201).json({ status: "success", code: 201, data: newContact });
-});
-
-router.delete("/:id", async (req, res, __) => {
-  const { id } = req.params;
-  const contacts = await listContacts();
-  const index = contacts.findIndex((contact) => contact.id === id);
-  if (index === -1) {
-    return res.status(404).json({
-      status: "error",
-      code: 404,
-      message: "not found",
-    });
+  try {
+    const result = await addContact({ name, email, phone });
+    res.status(201).json({ status: "success", code: 201, data: result });
+  } catch (err) {
+    console.log("An error occurred while adding the contact:", err);
+    next(err);
   }
-  removeContact(index);
-  res.json({
-    status: "success",
-    code: 200,
-    message: "contact deleted",
-  });
 });
 
-router.put("/:id", async (req, res, __) => {
+router.delete("/:id", async (req, res, next) => {
   const { id } = req.params;
-  const body = req.body;
+  try {
+    await removeContact(id);
 
-  const schema = Joi.object({
-    name: Joi.string().min(3).max(30),
-    email: Joi.string().email(),
-    phone: Joi.string().min(7).max(15),
-  }).required();
+    res.json({
+      status: "success",
+      code: 200,
+      message: "contact deleted",
+    });
+  } catch (err) {
+    console.log("An error occurred while deleting the contact:", err);
+    next(err);
+  }
+});
 
-  const validation = schema.validate(body);
+router.put("/:id", async (req, res, next) => {
+  const { id } = req.params;
+  const { name, email, phone } = req.body;
 
-  if (validation.error || Object.keys(body).length === 0) {
+  try {
+    const result = await updateContact(id, { name, email, phone });
+
+    res.json({ status: "success", code: 200, data: result });
+  } catch (err) {
+    console.log("An error occurred while updating the contact:", err);
+    next(err);
+  }
+});
+
+router.patch("/:id/favorite", async (req, res, next) => {
+  const { id } = req.params;
+  const { favorite } = req.body;
+
+  if (Object.keys(req.body).length === 0) {
     return res.status(400).json({
       status: "error",
       code: 400,
-      message: `there is something wrong in your data: ${
-        validation.error ? validation.error : "missing fields"
-      }`,
+      message: `there is missing field favorite`,
     });
   }
 
-  const contactToUpdate = await getContactById(id);
-  if (!contactToUpdate) {
-    return res.status(404).json({
-      status: "error",
-      code: 404,
-      message: "not found",
-    });
+  try {
+    const result = await updateStatusContact(id, { favorite });
+
+    res.json({ status: "success", code: 200, data: result });
+  } catch (err) {
+    console.log("An error occurred while updating the contact:", err);
+    next(err);
   }
-  const updatedContact = { ...contactToUpdate, ...body };
-  updateContact(id, updatedContact);
-  console.log(body);
-  res.json({ status: "success", code: 200, data: updatedContact });
 });
 
 module.exports = router;

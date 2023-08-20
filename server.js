@@ -2,13 +2,10 @@ const app = require("./app");
 const mongoose = require("mongoose");
 
 const connection = mongoose.connect(
-  "mongodb+srv://little_kama:Go1TMongoDBtest@cluster0.sjjhtdq.mongodb.net/?retryWrites=true&w=majority",
+  "mongodb+srv://little_kama:Go1TMongoDBtest@cluster0.sjjhtdq.mongodb.net/db-contacts?retryWrites=true&w=majority",
   {
-    promiseLibrary: global.Promise,
     useNewUrlParser: true,
-    useCreateIndex: true,
     useUnifiedTopology: true,
-    useFindAndModify: false,
   }
 );
 
