@@ -12,7 +12,7 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
-
+require("./config/config-passport");
 app.use("/api/contacts", contactsRouter);
 app.use("/api/users", usersRouter);
 
@@ -20,7 +20,8 @@ app.use((_, res) => {
   res.status(404).json({
     status: "error",
     code: 404,
-    message: "Use api on routes: /api/contacts or api/contacts/:id",
+    message:
+      "Use api on routes: /api/contacts, api/contacts/:id, api/contacts/:id/favorite, api/users/signup or api/users/login",
     data: "Not found",
   });
 });

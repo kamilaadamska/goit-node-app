@@ -102,4 +102,5 @@ const loginHandler = async (req, res, _) => {
 module.exports = {
   signupHandler,
   loginHandler,
+  secret,
 };
