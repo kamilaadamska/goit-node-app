@@ -1,8 +1,9 @@
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const User = require("../models/schemas/user");
+require("dotenv").config();
 
-const secret = "secret word";
+const secret = process.env.SECRET;
 
 const schema = Joi.object({
   email: Joi.string().email().required(),
@@ -79,6 +80,8 @@ const loginHandler = async (req, res, _) => {
     user.token = token;
     await user.save();
 
+    res.setHeader("Authorization", `Bearer ${token}`);
+
     return res.status(200).json({
       status: "success",
       code: 200,
@@ -102,5 +105,4 @@ const loginHandler = async (req, res, _) => {
 module.exports = {
   signupHandler,
   loginHandler,
-  secret,
 };
