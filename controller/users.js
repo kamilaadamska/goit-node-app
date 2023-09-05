@@ -102,7 +102,41 @@ const loginHandler = async (req, res, _) => {
   }
 };
 
+const logoutHandler = async (req, res, _) => {
+  const { user } = req;
+
+  try {
+    user.token = null;
+    await user.save();
+
+    return res.status(204).send();
+  } catch (err) {
+    return res.status(400).json({
+      status: "unauthorized",
+      code: 401,
+      message: `Incorrect login or password, ${err.message}`,
+      data: "Bad request",
+    });
+  }
+};
+
+const currentHandler = (req, res, _) => {
+  const { email, subscription } = req.user;
+
+  return res.json({
+    status: "success",
+    code: 200,
+    data: {
+      message: `Authorization was successful!`,
+      email,
+      subscription,
+    },
+  });
+};
+
 module.exports = {
   signupHandler,
   loginHandler,
+  logoutHandler,
+  currentHandler,
 };
