@@ -9,9 +9,11 @@ const {
   updateStatusContact,
 } = require("../models/contacts");
 
-const getHandler = async (_, res, __) => {
+const getHandler = async (req, res, __) => {
+  const { _id } = req.user;
+
   try {
-    const contacts = await listContacts();
+    const contacts = await listContacts(_id);
 
     if (contacts.length === 0) {
       throw new Error();
@@ -34,8 +36,10 @@ const getHandler = async (_, res, __) => {
 
 const getByIdHandler = async (req, res, _) => {
   const { id } = req.params;
+  const { _id } = req.user;
+
   try {
-    const searchedContact = await getContactById(id);
+    const searchedContact = await getContactById(id, _id);
 
     if (!searchedContact) {
       throw new Error();
@@ -54,6 +58,7 @@ const getByIdHandler = async (req, res, _) => {
 
 const postHandler = async (req, res, next) => {
   const { name, email, phone } = req.body;
+  const { _id } = req.user;
 
   const schema = Joi.object({
     name: Joi.string().min(3).max(30).required(),
@@ -72,7 +77,7 @@ const postHandler = async (req, res, next) => {
   }
 
   try {
-    const newContact = await addContact({ name, email, phone });
+    const newContact = await addContact(name, email, phone, _id);
 
     return res
       .status(201)
@@ -85,8 +90,9 @@ const postHandler = async (req, res, next) => {
 
 const deleteHandler = async (req, res, __) => {
   const { id } = req.params;
+  const { _id } = req.user;
   try {
-    const result = await removeContact(id);
+    const result = await removeContact(id, _id);
 
     if (!result) {
       throw new Error();
@@ -109,7 +115,8 @@ const deleteHandler = async (req, res, __) => {
 
 const putHandler = async (req, res, _) => {
   const { id } = req.params;
-  const { name, email, phone } = req.body;
+  const { body } = req;
+  const { _id } = req.user;
 
   const schema = Joi.object({
     name: Joi.string().min(3).max(30),
@@ -117,9 +124,9 @@ const putHandler = async (req, res, _) => {
     phone: Joi.string().min(7).max(15),
   }).required();
 
-  const validation = schema.validate(req.body);
+  const validation = schema.validate(body);
 
-  if (validation.error || Object.keys(req.body).length === 0) {
+  if (validation.error || Object.keys(body).length === 0) {
     return res.status(400).json({
       status: "error",
       code: 400,
@@ -130,7 +137,7 @@ const putHandler = async (req, res, _) => {
   }
 
   try {
-    const updatedContact = await updateContact(id, { name, email, phone });
+    const updatedContact = await updateContact(id, _id, body);
 
     if (!updatedContact) {
       throw new Error();
@@ -150,6 +157,7 @@ const putHandler = async (req, res, _) => {
 const patchHandler = async (req, res, _) => {
   const { id } = req.params;
   const { favorite } = req.body;
+  const { _id } = req.user;
 
   const schema = Joi.boolean().required();
   const validation = schema.validate(favorite);
@@ -178,7 +186,7 @@ const patchHandler = async (req, res, _) => {
   }
 
   try {
-    const result = await updateStatusContact(id, { favorite });
+    const result = await updateStatusContact(id, _id, { favorite });
 
     if (!result) {
       throw new Error();

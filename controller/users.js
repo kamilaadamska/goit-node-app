@@ -5,6 +5,8 @@ require("dotenv").config();
 
 const secret = process.env.SECRET;
 
+const { updateUserSub } = require("../models/users");
+
 const schema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(7).required(),
@@ -134,9 +136,62 @@ const currentHandler = (req, res, _) => {
   });
 };
 
+const patchHandler = async (req, res, _) => {
+  const { subscription } = req.body;
+  const { _id } = req.user;
+
+  const schema = Joi.string().required();
+  const validation = schema.validate(subscription);
+
+  if (validation.error) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: `missing field subscription or subscription must be string`,
+    });
+  } else if (Object.keys(req.body).length > 1) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: "only field subscription is required",
+    });
+  } else if (
+    !(
+      subscription === "starter" ||
+      subscription === "pro" ||
+      subscription === "business"
+    )
+  ) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message:
+        "subscription field must have a value 'starter', 'pro' or 'business'",
+    });
+  }
+
+  try {
+    const result = await updateUserSub(_id, { subscription });
+
+    if (!result) {
+      throw new Error();
+    }
+
+    return res.json({ status: "success", code: 200, data: result });
+  } catch (err) {
+    return res.status(404).json({
+      status: "error",
+      code: 404,
+      data: "contact not found",
+      message: err.message,
+    });
+  }
+};
+
 module.exports = {
   signupHandler,
   loginHandler,
   logoutHandler,
   currentHandler,
+  patchHandler,
 };
