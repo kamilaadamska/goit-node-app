@@ -1,6 +1,7 @@
 const express = require("express");
-
 const router = express.Router();
+
+const { auth } = require("../../service/auth");
 
 const {
   getHandler,
@@ -11,16 +12,16 @@ const {
   patchHandler,
 } = require("../../controller/contacts");
 
-router.get("/", getHandler);
+router.get("/", auth, getHandler);
 
-router.get("/:id", getByIdHandler);
+router.get("/:id", auth, getByIdHandler);
 
-router.post("/", postHandler);
+router.post("/", auth, postHandler);
 
-router.delete("/:id", deleteHandler);
+router.delete("/:id", auth, deleteHandler);
 
-router.put("/:id", putHandler);
+router.put("/:id", auth, putHandler);
 
-router.patch("/:id/favorite", patchHandler);
+router.patch("/:id/favorite", auth, patchHandler);
 
 module.exports = router;

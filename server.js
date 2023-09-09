@@ -1,13 +1,12 @@
 const app = require("./app");
 const mongoose = require("mongoose");
 
-const connection = mongoose.connect(
-  "mongodb+srv://little_kama:Go1TMongoDBtest@cluster0.sjjhtdq.mongodb.net/db-contacts?retryWrites=true&w=majority",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+const uriDb = process.env.URI_DB;
+
+const connection = mongoose.connect(uriDb, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 connection
   .then(() => {
