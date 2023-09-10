@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs").promises;
+const Jimp = require("jimp");
 const User = require("../models/schemas/user");
 require("dotenv").config();
 
@@ -204,13 +205,23 @@ const patchSubHandler = async (req, res, _) => {
 const patchAvHandler = async (req, res, next) => {
   const { path: tmpPatchName, originalname } = req.file;
   const { user } = req;
+
+  const lastDotIndex = originalname.lastIndexOf(".");
+  const fileExtension =
+    lastDotIndex === -1 ? "" : originalname.substring(lastDotIndex + 1);
+
+  const newName = `avatar-${user._id}.${fileExtension}`;
   const storeAvatar = path.join(process.cwd(), "public/avatars");
-  const newFilePath = path.join(storeAvatar, originalname);
+  const newFilePath = path.join(storeAvatar, newName);
 
   try {
+    const avatar = await Jimp.read(tmpPatchName);
+    avatar.resize(250, 250);
+    await avatar.writeAsync(tmpPatchName);
+
     await fs.rename(tmpPatchName, newFilePath);
 
-    user.avatarURL = `/avatars/${originalname}`;
+    user.avatarURL = `/avatars/${newName}`;
     user.save();
 
     return res.json({
