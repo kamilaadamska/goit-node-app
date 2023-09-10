@@ -8,8 +8,11 @@ const {
   loginHandler,
   logoutHandler,
   currentHandler,
-  patchHandler,
+  patchSubHandler,
+  patchAvHandler,
 } = require("../../controller/users");
+
+const { upload } = require("../../config/config-multer");
 
 router.post("/signup", signupHandler);
 
@@ -19,6 +22,8 @@ router.get("/logout", auth, logoutHandler);
 
 router.get("/current", auth, currentHandler);
 
-router.patch("/", auth, patchHandler);
+router.patch("/", auth, patchSubHandler);
+
+router.patch("/avatars", auth, upload.single("avatar"), patchAvHandler);
 
 module.exports = router;

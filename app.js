@@ -28,7 +28,7 @@ app.use((_, res) => {
     status: "error",
     code: 404,
     message:
-      "Use api on routes: /api/contacts, api/contacts/:id, api/contacts/:id/favorite, api/users/signup or api/users/login",
+      "Use api on routes: POST: api/users/signup or api/users/login, GET api/users/current or api/users/logout, PATCH api/users/ or api/users/avatars, GET/POST /api/contacts, GET/DELETE/PUT api/contacts/:id, PATCH api/contacts/:id/favorite.",
     data: "Not found",
   });
 });

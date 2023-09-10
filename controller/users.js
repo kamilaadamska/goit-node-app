@@ -1,6 +1,8 @@
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs").promises;
 const User = require("../models/schemas/user");
 require("dotenv").config();
 
@@ -101,6 +103,7 @@ const loginHandler = async (req, res, _) => {
       user: {
         email: user.email,
         subscription: user.subscription,
+        avatarURL: user.avatarURL,
       },
     });
   } catch (err) {
@@ -132,7 +135,7 @@ const logoutHandler = async (req, res, _) => {
 };
 
 const currentHandler = (req, res, _) => {
-  const { email, subscription } = req.user;
+  const { email, subscription, avatarURL } = req.user;
 
   return res.json({
     status: "success",
@@ -141,11 +144,12 @@ const currentHandler = (req, res, _) => {
       message: `Authorization was successful!`,
       email,
       subscription,
+      avatarURL,
     },
   });
 };
 
-const patchHandler = async (req, res, _) => {
+const patchSubHandler = async (req, res, _) => {
   const { subscription } = req.body;
   const { _id } = req.user;
 
@@ -191,9 +195,32 @@ const patchHandler = async (req, res, _) => {
     return res.status(404).json({
       status: "error",
       code: 404,
-      data: "contact not found",
+      data: "user not found",
       message: err.message,
     });
+  }
+};
+
+const patchAvHandler = async (req, res, next) => {
+  const { path: tmpPatchName, originalname } = req.file;
+  const { user } = req;
+  const storeAvatar = path.join(process.cwd(), "public/avatars");
+  const newFilePath = path.join(storeAvatar, originalname);
+
+  try {
+    await fs.rename(tmpPatchName, newFilePath);
+
+    user.avatarURL = `/avatars/${originalname}`;
+    user.save();
+
+    return res.json({
+      status: "success",
+      code: 200,
+      avatarURL: user.avatarURL,
+    });
+  } catch (err) {
+    await fs.unlink(tmpPatchName);
+    return next(err);
   }
 };
 
@@ -202,5 +229,6 @@ module.exports = {
   loginHandler,
   logoutHandler,
   currentHandler,
-  patchHandler,
+  patchSubHandler,
+  patchAvHandler,
 };
