@@ -1,5 +1,6 @@
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
 const User = require("../models/schemas/user");
 require("dotenv").config();
 
@@ -38,6 +39,14 @@ const signupHandler = async (req, res, next) => {
   try {
     const newUser = new User({ email });
     newUser.setPassword(password);
+
+    const url = gravatar.url(email, {
+      s: "250",
+      d: "robohash",
+    });
+
+    newUser.avatarURL = url;
+
     await newUser.save();
 
     return res.status(201).json({
