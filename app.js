@@ -9,12 +9,16 @@ const contactsRouter = require("./routes/api/contacts");
 const usersRouter = require("./routes/api/users");
 
 const app = express();
+
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 const { auth } = require("./service/auth");
 
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+
+const path = require("path");
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/contacts", auth, contactsRouter);
 app.use("/api/users", usersRouter);
