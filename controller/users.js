@@ -202,6 +202,8 @@ const patchSubHandler = async (req, res, _) => {
   }
 };
 
+const storeAvatar = path.join(process.cwd(), "public/avatars");
+
 const patchAvHandler = async (req, res, next) => {
   const { path: tmpPatchName, originalname } = req.file;
   const { user } = req;
@@ -211,7 +213,6 @@ const patchAvHandler = async (req, res, next) => {
     lastDotIndex === -1 ? "" : originalname.substring(lastDotIndex + 1);
 
   const newName = `avatar-${user._id}.${fileExtension}`;
-  const storeAvatar = path.join(process.cwd(), "public/avatars");
   const newFilePath = path.join(storeAvatar, newName);
 
   try {
@@ -242,4 +243,5 @@ module.exports = {
   currentHandler,
   patchSubHandler,
   patchAvHandler,
+  storeAvatar,
 };
