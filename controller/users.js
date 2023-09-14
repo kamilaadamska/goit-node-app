@@ -1,5 +1,9 @@
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs").promises;
+const Jimp = require("jimp");
 const User = require("../models/schemas/user");
 require("dotenv").config();
 
@@ -38,6 +42,14 @@ const signupHandler = async (req, res, next) => {
   try {
     const newUser = new User({ email });
     newUser.setPassword(password);
+
+    const url = gravatar.url(email, {
+      s: "250",
+      d: "robohash",
+    });
+
+    newUser.avatarURL = url;
+
     await newUser.save();
 
     return res.status(201).json({
@@ -92,6 +104,7 @@ const loginHandler = async (req, res, _) => {
       user: {
         email: user.email,
         subscription: user.subscription,
+        avatarURL: user.avatarURL,
       },
     });
   } catch (err) {
@@ -123,7 +136,7 @@ const logoutHandler = async (req, res, _) => {
 };
 
 const currentHandler = (req, res, _) => {
-  const { email, subscription } = req.user;
+  const { email, subscription, avatarURL } = req.user;
 
   return res.json({
     status: "success",
@@ -132,11 +145,12 @@ const currentHandler = (req, res, _) => {
       message: `Authorization was successful!`,
       email,
       subscription,
+      avatarURL,
     },
   });
 };
 
-const patchHandler = async (req, res, _) => {
+const patchSubHandler = async (req, res, _) => {
   const { subscription } = req.body;
   const { _id } = req.user;
 
@@ -182,9 +196,43 @@ const patchHandler = async (req, res, _) => {
     return res.status(404).json({
       status: "error",
       code: 404,
-      data: "contact not found",
+      data: "user not found",
       message: err.message,
     });
+  }
+};
+
+const storeAvatar = path.join(process.cwd(), "public/avatars");
+
+const patchAvHandler = async (req, res, next) => {
+  const { path: tmpPatchName, originalname } = req.file;
+  const { user } = req;
+
+  const lastDotIndex = originalname.lastIndexOf(".");
+  const fileExtension =
+    lastDotIndex === -1 ? "" : originalname.substring(lastDotIndex + 1);
+
+  const newName = `avatar-${user._id}.${fileExtension}`;
+  const newFilePath = path.join(storeAvatar, newName);
+
+  try {
+    const avatar = await Jimp.read(tmpPatchName);
+    avatar.resize(250, 250);
+    await avatar.writeAsync(tmpPatchName);
+
+    await fs.rename(tmpPatchName, newFilePath);
+
+    user.avatarURL = `/avatars/${newName}`;
+    user.save();
+
+    return res.json({
+      status: "success",
+      code: 200,
+      avatarURL: user.avatarURL,
+    });
+  } catch (err) {
+    await fs.unlink(tmpPatchName);
+    return next(err);
   }
 };
 
@@ -193,5 +241,7 @@ module.exports = {
   loginHandler,
   logoutHandler,
   currentHandler,
-  patchHandler,
+  patchSubHandler,
+  patchAvHandler,
+  storeAvatar,
 };

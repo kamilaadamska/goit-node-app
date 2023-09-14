@@ -2,21 +2,25 @@ const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
 
+require("dotenv").config();
+require("./config/config-passport");
+
 const contactsRouter = require("./routes/api/contacts");
 const usersRouter = require("./routes/api/users");
 
 const app = express();
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
-
-require("dotenv").config();
-require("./config/config-passport");
+const { auth } = require("./service/auth");
 
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/contacts", contactsRouter);
+const path = require("path");
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use("/api/contacts", auth, contactsRouter);
 app.use("/api/users", usersRouter);
 
 app.use((_, res) => {
@@ -24,7 +28,7 @@ app.use((_, res) => {
     status: "error",
     code: 404,
     message:
-      "Use api on routes: /api/contacts, api/contacts/:id, api/contacts/:id/favorite, api/users/signup or api/users/login",
+      "Use api on routes: POST: api/users/signup or api/users/login, GET api/users/current or api/users/logout, PATCH api/users/ or api/users/avatars, GET/POST /api/contacts, GET/DELETE/PUT api/contacts/:id, PATCH api/contacts/:id/favorite.",
     data: "Not found",
   });
 });
