@@ -10,11 +10,13 @@ const transporter = nodemailer.createTransport({
   secure: true,
 });
 
-const mailOptions = {
-  from: "verification@nodeapp.com",
-  to: "121kama121@gmail.com",
-  subject: "User verification",
-  html: `Welcome to NodeApp! To verify your account, click the link below: <a href="#">Hello</a> *Ignore this message if you are not the one who registered an account in our app.`,
+const mailOptions = (email, link) => {
+  return {
+    from: "verification@nodeapp.com",
+    to: email,
+    subject: "User verification",
+    html: `<h1>Welcome to NodeApp by Kamila!</h1> <p>To verify your account, click the link below: <a href="${link}">${link}</a></p> <i>*Ignore this message if you are not the one who registered an account in our app.</i>`,
+  };
 };
 
 module.exports = { transporter, mailOptions };
