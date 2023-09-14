@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs").promises;
 const Jimp = require("jimp");
 const User = require("../models/schemas/user");
+const { transporter, mailOptions } = require("../config/config-nodemailer");
 require("dotenv").config();
 
 const secret = process.env.SECRET;
@@ -76,6 +77,11 @@ const loginHandler = async (req, res, _) => {
       message: validation.error.message,
     });
   }
+
+  transporter
+    .sendMail(mailOptions)
+    .then((info) => console.log(info))
+    .catch((err) => console.log(err));
 
   try {
     const user = await User.findOne({ email });
