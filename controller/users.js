@@ -4,7 +4,7 @@ const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs").promises;
 const Jimp = require("jimp");
-const nanoid = require("nanoid");
+const { nanoid } = require("nanoid");
 const User = require("../models/schemas/user");
 const { transporter, mailOptions } = require("../config/config-nodemailer");
 require("dotenv").config();
@@ -267,9 +267,75 @@ const verificationHandler = async (req, res, _) => {
     });
   } catch (err) {
     return res.status(404).json({
+      status: "Error - Not Found",
+      code: 404,
+      data: "User not found",
+      message: err.message,
+    });
+  }
+};
+
+const isVerifyHandler = async (req, res, _) => {
+  const { email } = req.body;
+
+  const schema = Joi.string().email().required();
+  const validation = schema.validate(email);
+
+  if (
+    Object.keys(req.body).length > 1 ||
+    Object.keys(req.body)[0] !== "email"
+  ) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: `${
+        Object.keys(req.body).length > 1
+          ? "only field email is required"
+          : "missing required field email"
+      }`,
+    });
+  }
+
+  if (validation.error) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: `Please provide correct email`,
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error();
+    }
+
+    if (user.verify) {
+      return res.status(400).json({
+        status: "Bad request",
+        code: 400,
+        message: "Verification has already been passed",
+      });
+    }
+
+    const link = `/users/verify/${user.verificationToken}`;
+
+    transporter
+      .sendMail(mailOptions(email, link))
+      .then((info) => console.log(info))
+      .catch((err) => console.log(err));
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Email with a verification link has been sent",
+    });
+  } catch (err) {
+    return res.status(404).json({
       status: "error",
       code: 404,
-      data: "not found",
+      data: "user not found",
       message: err.message,
     });
   }
@@ -284,4 +350,5 @@ module.exports = {
   patchAvHandler,
   storeAvatar,
   verificationHandler,
+  isVerifyHandler,
 };

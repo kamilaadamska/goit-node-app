@@ -11,6 +11,7 @@ const {
   patchSubHandler,
   patchAvHandler,
   verificationHandler,
+  isVerifyHandler,
 } = require("../../controller/users");
 
 const { upload } = require("../../config/config-multer");
@@ -28,5 +29,7 @@ router.patch("/", auth, patchSubHandler);
 router.patch("/avatars", auth, upload.single("avatar"), patchAvHandler);
 
 router.get("/verify/:verificationToken", verificationHandler);
+
+router.post("/verify", isVerifyHandler);
 
 module.exports = router;
