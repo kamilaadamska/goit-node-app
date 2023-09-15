@@ -55,7 +55,7 @@ const signupHandler = async (req, res, next) => {
 
     await newUser.save();
 
-    const link = `/users/verify/${newUser.verificationToken}`;
+    const link = `/api/users/verify/${newUser.verificationToken}`;
 
     transporter
       .sendMail(mailOptions(email, link))
@@ -319,7 +319,7 @@ const isVerifyHandler = async (req, res, _) => {
       });
     }
 
-    const link = `/users/verify/${user.verificationToken}`;
+    const link = `/api/users/verify/${user.verificationToken}`;
 
     transporter
       .sendMail(mailOptions(email, link))
