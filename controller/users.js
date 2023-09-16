@@ -4,12 +4,14 @@ const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs").promises;
 const Jimp = require("jimp");
+const { nanoid } = require("nanoid");
 const User = require("../models/schemas/user");
+const { transporter, mailOptions } = require("../config/config-nodemailer");
 require("dotenv").config();
 
 const secret = process.env.SECRET;
 
-const { updateUserSub } = require("../models/users");
+const { updateUserSub, getUserByVerificToken } = require("../models/users");
 
 const schema = Joi.object({
   email: Joi.string().email().required(),
@@ -49,8 +51,16 @@ const signupHandler = async (req, res, next) => {
     });
 
     newUser.avatarURL = url;
+    newUser.verificationToken = nanoid();
 
     await newUser.save();
+
+    const link = `/api/users/verify/${newUser.verificationToken}`;
+
+    transporter
+      .sendMail(mailOptions(email, link))
+      .then((info) => console.log(info))
+      .catch((err) => console.log(err));
 
     return res.status(201).json({
       status: "success",
@@ -80,7 +90,7 @@ const loginHandler = async (req, res, _) => {
   try {
     const user = await User.findOne({ email });
 
-    if (!user || !user.validPassword(password)) {
+    if (!user || !user.validPassword(password) || !user.verify) {
       throw new Error();
     }
 
@@ -111,7 +121,7 @@ const loginHandler = async (req, res, _) => {
     return res.status(400).json({
       status: "unauthorized",
       code: 401,
-      message: `Incorrect login or password, ${err.message}`,
+      message: `Incorrect login or password or user is not verified, ${err.message}`,
       data: "Bad request",
     });
   }
@@ -223,7 +233,7 @@ const patchAvHandler = async (req, res, next) => {
     await fs.rename(tmpPatchName, newFilePath);
 
     user.avatarURL = `/avatars/${newName}`;
-    user.save();
+    await user.save();
 
     return res.json({
       status: "success",
@@ -236,6 +246,101 @@ const patchAvHandler = async (req, res, next) => {
   }
 };
 
+const verificationHandler = async (req, res, _) => {
+  const { verificationToken } = req.params;
+
+  try {
+    const user = await getUserByVerificToken(verificationToken);
+
+    if (!user) {
+      throw new Error();
+    }
+
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+
+    return res.json({
+      status: "success",
+      code: 200,
+      message: `Verification successful! Please log in!`,
+    });
+  } catch (err) {
+    return res.status(404).json({
+      status: "Error - Not Found",
+      code: 404,
+      data: "User not found",
+      message: err.message,
+    });
+  }
+};
+
+const isVerifyHandler = async (req, res, _) => {
+  const { email } = req.body;
+
+  const schema = Joi.string().email().required();
+  const validation = schema.validate(email);
+
+  if (
+    Object.keys(req.body).length > 1 ||
+    Object.keys(req.body)[0] !== "email"
+  ) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: `${
+        Object.keys(req.body).length > 1
+          ? "only field email is required"
+          : "missing required field email"
+      }`,
+    });
+  }
+
+  if (validation.error) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: `Please provide correct email`,
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error();
+    }
+
+    if (user.verify) {
+      return res.status(400).json({
+        status: "Bad request",
+        code: 400,
+        message: "Verification has already been passed",
+      });
+    }
+
+    const link = `/api/users/verify/${user.verificationToken}`;
+
+    transporter
+      .sendMail(mailOptions(email, link))
+      .then((info) => console.log(info))
+      .catch((err) => console.log(err));
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Email with a verification link has been sent",
+    });
+  } catch (err) {
+    return res.status(404).json({
+      status: "error",
+      code: 404,
+      data: "user not found",
+      message: err.message,
+    });
+  }
+};
+
 module.exports = {
   signupHandler,
   loginHandler,
@@ -244,4 +349,6 @@ module.exports = {
   patchSubHandler,
   patchAvHandler,
   storeAvatar,
+  verificationHandler,
+  isVerifyHandler,
 };
