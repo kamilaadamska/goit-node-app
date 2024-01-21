@@ -13,6 +13,31 @@
 - hw05
 - hw06
 
+# Nagłówek pierwszego poziomu
+
+To jest paragraf tekstu. **Tekst pogrubiony** i *tekst kursywa*. Możemy również dodawać [linki](http://www.przykladowy-link.pl).
+
+## Nagłówek drugiego poziomu
+
+### Listy
+
+1. Punkt 1
+2. Punkt 2
+   - Podpunkt A
+   - Podpunkt B
+3. Punkt 3
+
+### Obraz
+
+![Tekst alternatywny](ścieżka/do/obrazu.jpg)
+
+### Cytat
+
+> To jest cytat.
+
+---
+
+
 Кожна нова гілка для др повинна робитися з master
 
 Після того, як ви закінчили виконувати домашнє завдання у своїй гілці, необхідно зробити пулл-реквест (PR). Потім додати ментора для рев'ю коду. Тільки після того, як ментор заапрувить PR, ви можете виконати мердж гілки з домашнім завданням у майстер.
